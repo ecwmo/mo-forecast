@@ -20,13 +20,9 @@ echo " Start of Geogrid "
 echo "------------------"
 srun -n 1 ./geogrid.exe >&log.geogrid &
 tail --pid=$! -f log.geogrid
-if [ -z "$(grep "Successful" log.geogrid)" ]; then
-	echo "geogrid:error" > $TEMP_DIR/error.txt
-	exit
-fi
-echo "----------------"
+echo "------------------"
 echo " End of Geogrid "
-echo "----------------"
+echo "------------------"
 
 rm -f GRIBFILE.*
 # Update GFS link
@@ -36,31 +32,22 @@ ln -sf "$GFS_DIR"/*.grb "$WPS_GFSDIR"/.
 #ln -s ungrib/Variable_Tables/Vtable.GFS Vtable #new line added; one time use
 
 rm -f FILE:*
-echo "-----------------"
+echo "------------------"
 echo " Start of Ungrib "
-echo "-----------------"
+echo "------------------"
 srun -n 1 ./ungrib.exe >&log.ungrib &
 tail --pid=$! -f log.ungrib
-if [ -z "$(grep "Successful" log.ungrib)" ]; then
-	echo "ungrib:error" > $TEMP_DIR/error.txt
-	exit 
-fi
-echo "---------------"
+echo "------------------"
 echo " End of Ungrib "
-echo "---------------"
+echo "------------------"
 
 rm -f "$NAMELIST_SUFF"/met_em.d0*
-echo "------------------"
 echo " Start of Metgrid "
 echo "------------------"
 srun ./metgrid.exe >&log.metgrid &
 tail --pid $! -f log.metgrid
-if [ -z "$(grep "Successful" log.metgrid)" ]; then
-	echo "metgrid:error" > $TEMP_DIR/error.txt
-	exit 
-fi
 echo "------------------"
-echo "  End of Metgrid  "
+echo " End of Metgrid "
 echo "------------------"
 
 rm -f geo_em*

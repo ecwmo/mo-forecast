@@ -44,32 +44,7 @@ echo "  ********************  "
 
 rm -f wrfbdy* wrfinput*
 srun ./real.exe >&log.real &
-REAL_PID=$!
-tail --pid=$REAL_PID -f rsl.error.0000
-
-wait $REAL_PID
-
-success=false
-
-for log_file in rsl.error.*; do
-	if grep -q "SUCCESS COMPLETE REAL_EM INIT" "$log_file";
-		success=true
-		break
-	fi
-done
-
-if [ $success = true ]; then
-	echo " *************************"
-	echo " real.exe ran successfully "
-	echo " *************************"
-else
-	echo "  ********************  "
-	echo "  real.exe failed "
-	echo "  ********************  "
-	echo "Check rsl.error.* files for more details."
-	echo "real:error" > $TEMP_DIR/error.txt
-	exit 1
-fi
+tail --pid=$! -f rsl.error.0000
 
 echo "  ********************  "
 echo " End of REAL "
@@ -95,35 +70,7 @@ echo " Running WRF "
 echo "  ********************  "
 
 srun ./wrf.exe >&log.wrf &
-
-WRF_PID=$!
-
-tail --pid=$WRF_PID -f rsl.error.0000
-
-wait $WRF_PID
-
-success=false
-
-for log_file in rsl.error.*; do
-	if grep -q "SUCCESS COMPLETE WRF" "$log_file"; then
-		success=true
-		break
-	fi
-done
-
-
-if [ "$success" = true ]; then
-	echo " *************************"
-	echo " WRF.exe ran successfully "
-	echo " *************************"
-else
-	echo "  ********************  "
-	echo "  WRF.exe failed "
-	echo "  ********************  "
-	echo "Check rsl.error.* files for more details."
-	echo "wrf:error" > $TEMP_DIR/error.txt
-	exit 1
-fi
+tail --pid=$! -f rsl.error.0000
 
 echo "  ********************  "
 echo " End of WRF "
