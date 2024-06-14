@@ -12,7 +12,7 @@ from const import (
     domain_land_mask as land_mask,
 )
 from config import Config
-from helpers.ari import *
+from helpers.ari import regrid, open_ref, mask, run_interp
 from helpers.model_agreement import model_agreement
 
 lon_formatter = LongitudeFormatter(zero_direction_label=True, degree_symbol="")
@@ -61,7 +61,7 @@ def plot_maps(ds, out_dir):
                         )
             elif var_name in ["rainx", "rainx_clim"]:
                 das = {"ens": ds["rain"].isel(time=t).mean("ens")}
-                das_regrid =  mask(regrid(ds["rain"].mean("ens"), open_ref()))
+                das_regrid = mask(regrid(ds["rain"].mean("ens"), open_ref()))
             elif var_name == "temp":
                 _da = (
                     ds["tsk"]
@@ -111,13 +111,15 @@ def plot_maps(ds, out_dir):
 
                 if var_name == "rainx":
                     filt_ari = run_interp(das_regrid).isel(time=t)
-                    filt_ari = regrid(filt_ari, ds[["lat", "lon"]], method="conservative")
+                    filt_ari = regrid(
+                        filt_ari, ds[["lat", "lon"]], method="conservative"
+                    )
                     da = da.where(filt_ari["rain"] >= 5)
-                    
+
                 elif var_name == "rainx_clim":
                     filt_month = model_agreement(ds["rain"].isel(time=t))
                     da = da.where(filt_month >= 2)
-                        
+
                 elif var_name == "temp":
                     p = _das[da_name].plot.contour(
                         ax=ax,
@@ -183,7 +185,7 @@ def plot_maps(ds, out_dir):
                         ax=ax,
                         transform=conf.plot_proj,
                         levels=levels,
-                        colors=colors, # previously white
+                        colors=colors,  # previously white
                         alpha=1,
                         extend="both",
                         add_labels=False,
@@ -194,7 +196,7 @@ def plot_maps(ds, out_dir):
                         ax=ax,
                         transform=conf.plot_proj,
                         levels=levels,
-                        colors=colors, # previously white
+                        colors=colors,  # previously white
                         alpha=1,
                         extend="both",
                         add_labels=False,

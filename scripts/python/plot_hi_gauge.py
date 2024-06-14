@@ -173,17 +173,23 @@ def plot_gauge(ds, outdir):
         )
 
         for i in _nan1:
-            _d1[0][i].set_hatch("..."), _d1[0][i].set_edgecolor("k"), _d1[0][
-                i
-            ].set_alpha(0.4)
+            (
+                _d1[0][i].set_hatch("..."),
+                _d1[0][i].set_edgecolor("k"),
+                _d1[0][i].set_alpha(0.4),
+            )
         for i in _nan2:
-            _d2[0][i].set_hatch("..."), _d2[0][i].set_edgecolor("k"), _d2[0][
-                i
-            ].set_alpha(0.4)
+            (
+                _d2[0][i].set_hatch("..."),
+                _d2[0][i].set_edgecolor("k"),
+                _d2[0][i].set_alpha(0.4),
+            )
         for i in _nan3:
-            _d3[0][i].set_hatch("..."), _d3[0][i].set_edgecolor("k"), _d3[0][
-                i
-            ].set_alpha(0.4)
+            (
+                _d3[0][i].set_hatch("..."),
+                _d3[0][i].set_edgecolor("k"),
+                _d3[0][i].set_alpha(0.4),
+            )
 
         for i, p in enumerate(_wedges):
             y = np.sin(np.deg2rad(p.theta2))

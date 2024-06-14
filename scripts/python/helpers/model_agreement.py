@@ -1,4 +1,3 @@
-import xarray as xr
 from const import trmm
 
 """ da must be daily WRF data with 3 ens members """

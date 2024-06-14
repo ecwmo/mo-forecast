@@ -39,7 +39,7 @@ def ARIinterp(_newx):
     _ari = [1.5, 2, 5, 10, 25, 30, 50, 100, 200, 500, 1000]
     _dat = _dat.assign_coords({"ari": _ari})
     _idx = xr.DataArray(_ari, dims=["ari"]).broadcast_like(_dat).to_dataset(name="rain")
-    
+
     _ari_interpd = xr.apply_ufunc(
         interpd,
         _newx,
@@ -78,7 +78,7 @@ plot_vars = {
     "rain": {
         "title": "Average Recurrence Interval (years)",
         "units": "years",
-        "levels": [1., 2., 3., 4., 5., 10., 15., 20., 30.],
+        "levels": [1.0, 2.0, 3.0, 4.0, 5.0, 10.0, 15.0, 20.0, 30.0],
         "colors": [
             "#ffffff",
             "#0064ff",

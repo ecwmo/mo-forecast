@@ -1,8 +1,6 @@
 import os
-import warnings
 import yagmail
 import json
-from pathlib import Path
 from typing import List
 
 from config import Config

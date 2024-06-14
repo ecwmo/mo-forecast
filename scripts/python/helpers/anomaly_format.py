@@ -1,13 +1,14 @@
 from cartopy import crs as ccrs
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import matplotlib as mp
-import matplotlib.pyplot as plt
 
-import numpy as np 
+import numpy as np
 
 mp.rcParams["font.size"] = 9
 
 plot_proj = ccrs.PlateCarree()
+
+
 def plot_format(ax):
     lon_formatter = LongitudeFormatter(zero_direction_label=True, degree_symbol="")
     lat_formatter = LatitudeFormatter(degree_symbol="")
@@ -16,14 +17,14 @@ def plot_format(ax):
     lat_labels = range(5, 25, 5)
     xlim = (116, 128)
     ylim = (5, 20)
-    
+
     ax.xaxis.set_major_formatter(lon_formatter)
     ax.yaxis.set_major_formatter(lat_formatter)
     ax.set_xticks(lon_labels, crs=plot_proj)
     ax.set_yticks(lat_labels, crs=plot_proj)
     ax.coastlines()
     ax.set_extent((*xlim, *ylim))
-    
+
     ax.annotate(
         "observatory.ph",
         xy=(10, 10),
@@ -34,6 +35,7 @@ def plot_format(ax):
     )
     return ax
 
+
 def plot_footer(ax, var):
     footer = "1971-2000 APHRODITE" if var == "temp" else "1998-2015 TRMM"
     ax.text(
@@ -43,7 +45,8 @@ def plot_footer(ax, var):
         fontsize=7,
     )
     return ax
-      
+
+
 plot_vars = {
     "rain_actual": {
         "title": "Total Rainfall\n(WRF ensemble)",
@@ -66,18 +69,27 @@ plot_vars = {
         "title": "Total Rainfall Anomaly\n(WRF ensemble minus baseline*)",
         "units": "mm",
         "levels": np.arange(-150, 175, 25),
-        "colors": [mp.colors.rgb2hex(mp.cm.get_cmap("BrBG")(i)) for i in range(mp.cm.get_cmap("BrBG").N) ],
+        "colors": [
+            mp.colors.rgb2hex(mp.cm.get_cmap("BrBG")(i))
+            for i in range(mp.cm.get_cmap("BrBG").N)
+        ],
     },
     "temp_actual": {
         "title": "Average Temperature\n(WRF ensemble)",
         "units": "°C",
         "levels": np.arange(18, 34, 2),
-        "colors": [mp.colors.rgb2hex(mp.cm.get_cmap("YlOrRd")(i)) for i in range(mp.cm.get_cmap("YlOrRd").N) ],
+        "colors": [
+            mp.colors.rgb2hex(mp.cm.get_cmap("YlOrRd")(i))
+            for i in range(mp.cm.get_cmap("YlOrRd").N)
+        ],
     },
     "temp_anomaly": {
         "title": "Average Temperature\n(WRF ensemble minus baseline*)",
         "units": "°C",
-        "levels": np.arange(-2.5, 3., .5),
-        "colors": [mp.colors.rgb2hex(mp.cm.get_cmap("coolwarm")(i)) for i in range(mp.cm.get_cmap("coolwarm").N) ],
-    }
+        "levels": np.arange(-2.5, 3.0, 0.5),
+        "colors": [
+            mp.colors.rgb2hex(mp.cm.get_cmap("coolwarm")(i))
+            for i in range(mp.cm.get_cmap("coolwarm").N)
+        ],
+    },
 }
