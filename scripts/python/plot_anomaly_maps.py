@@ -43,11 +43,11 @@ def set_dates(months):
     return _file_date
 
 
-def open_obs(): ## open observed climatological datasets
+def open_obs():  ## open observed climatological datasets
     gsmap = xr.open_dataset(f"{resources_dir}/gsmap_2001-2020_clim.nc")
-    gsmap = gsmap.rename({"longitude": "lon",'latitude':'lat'})
+    gsmap = gsmap.rename({"longitude": "lon", "latitude": "lat"})
     aphrodite = xr.open_dataset(f"{resources_dir}/APHRODITE_1971-2000_clim.nc")
-   
+
     return xr.merge([gsmap, aphrodite])
 
 
