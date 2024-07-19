@@ -37,7 +37,7 @@ def plot_format(ax):
 
 
 def plot_footer(ax, var):
-    footer = "1971-2000 APHRODITE" if var == "temp" else "1998-2015 TRMM"
+    footer = "1971-2000 APHRODITE" if var == "temp" else "2001-2020 GSMaP"
     ax.text(
         x=116,
         y=3.5,
