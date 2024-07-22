@@ -20,9 +20,11 @@ echo " Start of Geogrid "
 echo "------------------"
 srun -n 1 ./geogrid.exe >&log.geogrid &
 tail --pid=$! -f log.geogrid
-if [ -z "$(grep "Successful" log.geogrid)" ]; then
-	echo "geogrid:error" > $TEMP_DIR/error.txt
-	exit
+if grep -q "Successful" "log.geogrid"; then
+	echo "Suceessful"
+else
+	echo "geogrid:error" > "$TEMP_DIR/error.txt"
+	exit 1
 fi
 echo "----------------"
 echo " End of Geogrid "
@@ -41,9 +43,11 @@ echo " Start of Ungrib "
 echo "-----------------"
 srun -n 1 ./ungrib.exe >&log.ungrib &
 tail --pid=$! -f log.ungrib
-if [ -z "$(grep "Successful" log.ungrib)" ]; then
-	echo "ungrib:error" > $TEMP_DIR/error.txt
-	exit 
+if grep -q "Successful" "log.ungrib"; then
+	echo "Suceessful"
+else
+	echo "ungrib:error" > "$TEMP_DIR/error.txt"
+	exit 1
 fi
 echo "---------------"
 echo " End of Ungrib "
@@ -55,9 +59,11 @@ echo " Start of Metgrid "
 echo "------------------"
 srun ./metgrid.exe >&log.metgrid &
 tail --pid $! -f log.metgrid
-if [ -z "$(grep "Successful" log.metgrid)" ]; then
-	echo "metgrid:error" > $TEMP_DIR/error.txt
-	exit 
+if grep -q "Successful" "log.metgrid"; then
+	echo "Suceessful"
+else
+	echo "metgrid:error" > "$TEMP_DIR/error.txt"
+	exit 1
 fi
 echo "------------------"
 echo "  End of Metgrid  "
