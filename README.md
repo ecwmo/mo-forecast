@@ -69,7 +69,10 @@ mamba env update -p ./venv -f ./venv.yaml --prune
 
 ---
 
-We welcome contributions, to get started:
+### Prerequisites
+
+- [pre-commit](https://pre-commit.com/)
+- [tox < 4](https://tox.wiki/en/3.9.0/)
 
 ### 1. Fork the Repository
 
@@ -85,11 +88,19 @@ Make the necessary changes to the codebase.
 
 ### 4. Run Pre-commit Hooks
 
-Run pre-commit checks on all files: `pre-commit run --all-files`.
+Run pre-commit checks on all files:
+
+```bash
+pre-commit run --all-files
+```
 
 ### 5. Run Tox
 
-Execute tests defined in the tox.ini file: `CONDA_EXE=mamba tox`.
+Execute tests defined in the `tox.ini`` file:
+
+```bash
+CONDA_EXE=mamba tox
+```
 
 ### 6. Commit Your Changes
 
@@ -104,4 +115,3 @@ Push your branch (e.g. `git push origin feature-branch`).
 Open a Pull Request from your feature branch to the main repository.
 
 We appreciate your contributions and will review them as soon as possible.
-
