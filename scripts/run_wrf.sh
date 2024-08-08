@@ -44,7 +44,30 @@ echo "  ********************  "
 
 rm -f wrfbdy* wrfinput*
 srun ./real.exe >&log.real &
-tail --pid=$! -f rsl.error.0000
+REAL_PID=$!
+tail --pid=$REAL_PID -f rsl.error.0000
+
+wait $REAL_PID
+
+all_success=true
+
+for log_file in rsl.error.*; do
+	search=$(grep -o "SUCCESS COMPLETE" "$log_file")
+	if [[ $search == "SUCCESS COMPLETE" ]] ; then
+		echo "Success in $log_file"
+	else
+		echo "Run error occurred in $log_file. Please check 'error.txt' in $TEMP_DIR"
+		awk '/FATAL CALLED/,/-----/' "$log_file" > "$TEMP_DIR/error.txt"
+		all_success=false
+		break
+	fi
+done
+
+if $all_success; then
+	echo " ******************* "
+	echo " real.exe successful "
+	echo " ******************* "
+fi
 
 echo "  ********************  "
 echo " End of REAL "
@@ -70,7 +93,32 @@ echo " Running WRF "
 echo "  ********************  "
 
 srun ./wrf.exe >&log.wrf &
-tail --pid=$! -f rsl.error.0000
+
+WRF_PID=$!
+
+tail --pid=$WRF_PID -f rsl.error.0000
+
+wait $WRF_PID
+
+all_success=true
+
+for log_file in rsl.error.*; do
+	search=$(grep -o "SUCCESS COMPLETE" "$log_file")
+	if [[ $search == "SUCCESS COMPLETE" ]] ; then
+		echo "Success in $log_file"
+	else
+		echo "Run error occurred in $log_file. Please check 'error.txt' in $TEMP_DIR"
+		awk '/FATAL CALLED/,/-----/' "$log_file" > "$TEMP_DIR/error.txt"
+		all_success=false
+		break
+	fi
+done
+
+if $all_success; then
+	echo " ****************** "
+	echo " wrf.exe successful "
+	echo " ****************** "
+fi 
 
 echo "  ********************  "
 echo " End of WRF "
