@@ -73,6 +73,7 @@ rm -f "$ERROR_FILE"
 if [ $DOWNLOAD_INPUT -eq 1 ]; then
   # download GFS
   source "$SCRIPT_DIR/download_gfs.sh"
+  source "$SCRIPT_DIR/download_ecmwf.sh"
 fi
 
 if [[ $WRF_MODE == '3dvar' && $DOWNLOAD_MADIS -eq 1 ]]; then
@@ -81,8 +82,9 @@ if [[ $WRF_MODE == '3dvar' && $DOWNLOAD_MADIS -eq 1 ]]; then
 fi
 
 NUM_TIMESTEPS=$((WRF_FCST_DAYS * 24 + 1))
-GFS_FILES=("$GFS_DIR"/*.grb)
 
+# gfs files
+GFS_FILES=("$GFS_DIR"/*.grb)
 # Redownload GFS files if incomplete
 if [ ${#GFS_FILES[@]} -ne $NUM_TIMESTEPS ]; then
   echo "GFS files incomplete, redownloading.."
@@ -99,6 +101,25 @@ if [ ${#GFS_FILES[@]} -ne $NUM_TIMESTEPS ]; then
   echo "$err_msg"
   exit 1
 fi
+###################################################
+# ecmwf files
+ECMWF_FILES=("$ECMWF_DIR"/*.grib2)
+# Redownload ECMWF files if incomplete
+if [ ${#ECMWF_FILES[@]} -ne $NUM_TIMESTEPS ]; then
+  echo "ECMWF files incomplete, redownloading.."
+  sleep 5m # allowance in case of internet disconnection/server overload
+  source "$SCRIPT_DIR/download_ecmwf.sh"
+fi
+# Send notifier if GFS files still incomplete
+ECMWF_FILES=("$ECMWF_DIR"/*.grib2)
+if [ ${#ECMWF_FILES[@]} -ne $NUM_TIMESTEPS ]; then
+  err_msg="number of ECMWF Files: ${#ECMWF_FILES[@]}, expected: $NUM_TIMESTEPS"
+  echo "$err_msg" >"$ERROR_FILE"
+  source "$SCRIPT_DIR/send_alert.sh"
+  echo "$err_msg"
+  exit 1
+fi
+###################################################
 
 # WPS
 mkdir -p "$MODEL_LOG_DIR/wps"
