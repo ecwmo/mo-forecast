@@ -1,34 +1,197 @@
 #!/usr/bin/env python
 import argparse
+from io import TextIOWrapper
 import os
+import re
+import socket
 from pathlib import Path
+from datetime import datetime
+
+import concurrent.futures
 import multiprocessing
+from multiprocessing.managers import ValueProxy
+
+from typing import Union, Optional
+
+proc_map = {
+    "geogrid": {
+        "log": "geogrid.log",
+    },
+    "ungrib": {
+        "log": "ungrib.log",
+    },
+}
 
 
-def real(ntasks: int, errcore=None):
-    for i in range(ntasks):
-        if errcore is not None and i == errcore:
-            Path(f"./rsl.error.{i:04d}").write_text(
-                "d01 2024-06-17_18:00:00 real: ERROR REAL"
-            )
-        else:
-            Path(f"./rsl.error.{i:04d}").write_text(
-                "d01 2024-06-17_18:00:00 real: SUCCESS COMPLETE REAL"
-            )
-    Path("./wrfbdy_d01").touch()
-    Path("./wrfinput_d01").touch()
+def generate_log_start_msg(proc_name: str, core=0) -> str:
+    ts = datetime.now()
+    if proc_name in ["geogrid", "ungrib", "metgrid"]:
+        return f"{ts} ---  *** Starting program {proc_name}.exe ***"
+    elif proc_name in ["real", "wrf"]:
+        return f"taskid: {core} hostname: {socket.gethostname()}"
+    return f"Starting {proc_name} run"
 
 
-def wrf(ntasks: int, errcore=None):
-    for i in range(ntasks):
-        if errcore is not None and i == errcore:
-            Path(f"./rsl.error.{i:04d}").write_text(
-                "d01 2024-06-17_18:00:00 wrf: ERROR WRF"
-            )
-        else:
-            Path(f"./rsl.error.{i:04d}").write_text(
-                "d01 2024-06-17_18:00:00 wrf: SUCCESS COMPLETE WRF"
-            )
+def generate_log_end_msg(proc_name: str) -> str:
+    ts = datetime.now()
+    if proc_name in ["geogrid", "ungrib", "metgrid"]:
+        return f"{ts} ---  *** Successful completion of program {proc_name}.exe ***"
+    elif proc_name in ["real", "wrf"]:
+        return f"d01 {ts:%Y-%m-%d_%H:%M:%S} {proc_name}: SUCCESS COMPLETE {proc_name.upper()}"
+    return f"Successful {proc_name} run"
+
+
+def generate_start_msg(proc_name: str, core=0) -> str:
+    if proc_name in ["geogrid", "ungrib", "metgrid"]:
+        return f"*** Starting program {proc_name}.exe ***"
+    elif proc_name in ["real", "wrf"]:
+        return f"starting {proc_name} task {core} of "
+    return f"Starting {proc_name} run"
+
+
+def generate_end_msg(proc_name: str) -> str:
+    if proc_name == "geogrid":
+        msg = "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+        msg += "!  Successful completion of geogrid.        !\n"
+        msg += "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    elif proc_name == "ungrib":
+        msg = "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+        msg += "!  Successful completion of ungrib.   !\n"
+        msg += "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    elif proc_name == "metgrid":
+        msg = "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+        msg += "!  Successful completion of metgrid.  !\n"
+        msg += "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    else:
+        msg = ""
+    return msg
+
+
+class CoreInfo:
+    id: int
+    err_core: Optional[int]
+    fail_flag: Optional[ValueProxy[bool]] = None
+
+    def __init__(
+        self,
+        id: int = 0,
+        err_core: Optional[int] = None,
+        fail_flag: Optional[ValueProxy[bool]] = None,
+    ):
+        self.id = id
+        self.err_core = err_core
+        self.fail_flag = fail_flag
+
+    @property
+    def should_error(self) -> bool:
+        return self.id == self.err_core
+
+    @property
+    def should_fail(self) -> bool:
+        return self.fail_flag is not None and self.fail_flag.value
+
+    @should_fail.setter
+    def should_fail(self, value: bool):
+        if self.fail_flag:
+            self.fail_flag.value = value
+
+
+class Log:
+    stdout: bool
+    file_handler: Optional[TextIOWrapper]
+
+    def __init__(
+        self, stdout: bool = True, file_handler: Optional[TextIOWrapper] = None
+    ):
+        self.stdout = stdout
+        self.file_handler = file_handler
+
+    def log(self, msg: str, file_msg: Optional[str] = None, add_new_line=True):
+        if self.stdout:
+            print(msg)
+        if self.file_handler:
+            if file_msg:
+                msg = file_msg
+            if add_new_line:
+                msg += "\n"
+            self.file_handler.write(msg)
+
+
+def worker(
+    name: str,
+    core_info: CoreInfo,
+    log_file: Optional[Union[str, Path]] = None,
+):
+    if log_file is None:
+        log_file = Path(proc_map[name]["log"])
+    if isinstance(log_file, str):
+        log_file = Path(log_file)
+    if log_file.exists():
+        log_file.unlink()
+    file_handler = log_file.open("a")
+    logger = Log(file_handler=file_handler)
+
+    nlines: int = 20
+    fail_on = None
+    if core_info.should_error:
+        fail_on = 4
+
+    try:
+        logger.log(
+            generate_start_msg(name, core_info.id),
+            generate_log_start_msg(name, core_info.id),
+        )
+        for i in range(nlines):
+            if fail_on == i:
+                raise RuntimeError("Simulated core failure")
+            if core_info.should_fail:
+                logger.log(f"{name}: Detected failure, exiting.", add_new_line=False)
+                return
+            logger.log(f"{name}: Doing something {i} on {core_info.id}")
+        logger.log(generate_end_msg(name), generate_log_end_msg(name), False)
+    except Exception as e:
+        logger.log(
+            f"Process {core_info.id}: Exception occurred: {e}", add_new_line=False
+        )
+        core_info.should_fail = True
+    finally:
+        if file_handler:
+            file_handler.close()
+
+
+def general_pprocess(
+    name: str,
+    ntasks: int,
+    log_file_pfx="rsl.error",
+    err_core: Optional[int] = None,
+):
+    with multiprocessing.Manager() as manager:
+        fail_flag = manager.Value("b", False)
+
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            futures = [
+                executor.submit(
+                    worker,
+                    name,
+                    CoreInfo(i, err_core, fail_flag),
+                    f"{log_file_pfx}.{i:04d}",
+                )
+                for i in range(ntasks)
+            ]
+
+            for future in concurrent.futures.as_completed(futures):
+                try:
+                    future.result()
+                except Exception as e:
+                    print(f"Exception occurred: {e}")
+
+
+def extract_process_name(executable_name: str):
+    # Regular expression to match the string between "./" and ".exe"
+    match = re.search(r"(?:\./)?([^/]+?)(?:\.exe)?$", executable_name)
+    if match:
+        return match.group(1)
+    return None
 
 
 def main():
@@ -39,22 +202,38 @@ def main():
     )
 
     args = parser.parse_args()
+    proc_name = extract_process_name(args.executable)
 
     ntasks = args.ntasks
     if ntasks is None:
         ntasks = 1
-        _ntasks = os.getenv("SLURM_NTASKS")
-        if _ntasks is not None:
-            ntasks = int(_ntasks)
+        slurm_ntasks = os.getenv("SLURM_NTASKS")
+        if slurm_ntasks is not None:
+            ntasks = int(slurm_ntasks)
 
-    if "wrf" in args.executable:
-        process = multiprocessing.Process(target=wrf, args=(ntasks,))
-        process.start()
-        process.join()
-    elif "real" in args.executable:
-        process = multiprocessing.Process(target=real, args=(ntasks,))
-        process.start()
-        process.join()
+    err_on = os.getenv("TEST_ERR_ON")
+    err_core: Union[int, None] = None
+    if err_on is not None:
+        err_args = err_on.split(":")
+        if len(err_args) == 2:
+            err_on = err_args[0]
+            err_core = int(err_args[1])
+        if err_on == proc_name and err_core is None:
+            err_core = 0
+        elif err_on != proc_name:
+            err_core = None
+
+    if ntasks > multiprocessing.cpu_count():
+        ntasks = multiprocessing.cpu_count()
+        if err_core is not None and err_core > ntasks:
+            err_core = ntasks // 2
+
+    if proc_name in ["real", "wrf"]:
+        general_pprocess(proc_name, ntasks, err_core=err_core)
+    elif proc_name in ["geogrid", "ungrib"]:
+        worker(proc_name, CoreInfo(0, err_core))
+    elif "metgrid":
+        general_pprocess("metgrid", ntasks, "metgrid.log", err_core=err_core)
     else:
         msg = f"srun: running {args.executable}"
         if ntasks is not None:

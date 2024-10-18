@@ -40,6 +40,10 @@ def cron_env(request, tmp_path, monkeypatch, bash_dir):
     maindir = tmp_path
     monkeypatch.setenv("MAINDIR", str(maindir))
 
+    tmpdir = maindir / ".tmp"
+    tmpdir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("TEMP_DIR", str(tmpdir))
+
     gfsdir = maindir / "input/gfs_files"
     gfsdir.mkdir(parents=True, exist_ok=True)
     monkeypatch.setenv("GFS_BASE_DIR", str(gfsdir))

@@ -15,14 +15,21 @@ rm -f namelist.wps
 ln -s "namelist.wps_$NAMELIST_SUFF" namelist.wps
 
 rm -f "$NAMELIST_SUFF"/geo_em*
-echo "------------------"
-echo " Start of Geogrid "
-echo "------------------"
+echo "************************"
+echo "*   start of geogrid   *"
+echo "************************"
 srun -n 1 ./geogrid.exe >&log.geogrid &
 tail --pid=$! -f log.geogrid
-echo "------------------"
-echo " End of Geogrid "
-echo "------------------"
+if ! tail -n 5 "log.geogrid" | grep -q "Successful"; then
+  echo "geogrid" >>"$ERROR_FILE"
+  echo "************************"
+  echo "*     geogrid error    *"
+  echo "************************"
+  exit 1
+fi
+echo "************************"
+echo "*    end of geogrid    *"
+echo "************************"
 
 rm -f GRIBFILE.*
 # Update GFS link
@@ -32,23 +39,38 @@ ln -sf "$GFS_DIR"/*.grb "$WPS_GFSDIR"/.
 #ln -s ungrib/Variable_Tables/Vtable.GFS Vtable #new line added; one time use
 
 rm -f FILE:*
-echo "------------------"
-echo " Start of Ungrib "
-echo "------------------"
+echo "************************"
+echo "*   start of ungrib    *"
+echo "************************"
 srun -n 1 ./ungrib.exe >&log.ungrib &
 tail --pid=$! -f log.ungrib
-echo "------------------"
-echo " End of Ungrib "
-echo "------------------"
+if ! tail -n 5 "log.ungrib" | grep -q "Successful"; then
+  echo "ungrib" >>"$ERROR_FILE"
+  echo "************************"
+  echo "*     ungrib error     *"
+  echo "************************"
+  exit 1
+fi
+echo "************************"
+echo "*    end of ungrib     *"
+echo "************************"
 
 rm -f "$NAMELIST_SUFF"/met_em.d0*
-echo " Start of Metgrid "
-echo "------------------"
+echo "************************"
+echo "*   start of metgrid   *"
+echo "************************"
 srun ./metgrid.exe >&log.metgrid &
-tail --pid $! -f log.metgrid
-echo "------------------"
-echo " End of Metgrid "
-echo "------------------"
+tail --pid=$! -f log.metgrid
+if ! tail -n 5 "log.metgrid" | grep -q "Successful"; then
+  echo "metgrid" >>"$ERROR_FILE"
+  echo "************************"
+  echo "*     metgrid error    *"
+  echo "************************"
+  exit 1
+fi
+echo "************************"
+echo "*    end of metgrid    *"
+echo "************************"
 
 rm -f geo_em*
 rm -f FILE:*

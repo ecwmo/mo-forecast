@@ -1,15 +1,88 @@
 import os
 from pathlib import Path
 from datetime import datetime, timedelta
+import pytest
 
 
-def test_wps(run_script, set_date_env):
+@pytest.mark.parametrize(
+    "err_on, has_error",
+    [
+        (None, False),
+        ("geogrid", True),
+        ("ungrib", True),
+        ("metgrid", True),
+        ("metgrid:2", True),
+        ("foo", False),
+        ("foo:1", False),
+    ],
+)
+def test_wps(monkeypatch, run_script, set_date_env, err_on, has_error):
     ts = datetime(2024, 6, 3, 12)
     set_date_env(ts)
 
-    result = run_script("run_wps.sh")
-    assert result.returncode == 0
+    monkeypatch.setenv("SLURM_NTASKS", "4")
 
+    tmpdir = os.getenv("TEMP_DIR")
+    assert tmpdir is not None
+    assert Path(tmpdir).exists()
+    err_file = Path(tmpdir) / "error.txt"
+
+    monkeypatch.setenv("ERROR_FILE", str(err_file))
+
+    if err_on is not None:
+        monkeypatch.setenv("TEST_ERR_ON", err_on)
+    if has_error:
+        with pytest.raises(Exception):
+            run_script("run_wps.sh")
+        assert err_file.exists()
+    else:
+        result = run_script("run_wps.sh")
+        assert result.returncode == 0
+        assert not err_file.exists()
+        assert_wps_namelist(ts)
+
+
+@pytest.mark.parametrize(
+    "err_on, has_error",
+    [
+        (None, False),
+        ("real", True),
+        ("real:2", True),
+        ("wrf", True),
+        ("wrf:3", True),
+        ("foo", False),
+        ("foo:1", False),
+    ],
+)
+def test_wrf(monkeypatch, run_script, set_date_env, create_met_ems, err_on, has_error):
+    ts = datetime(2024, 6, 3, 12)
+    set_date_env(ts)
+
+    monkeypatch.setenv("SLURM_NTASKS", "4")
+
+    tmpdir = os.getenv("TEMP_DIR")
+    assert tmpdir is not None
+    assert Path(tmpdir).exists()
+    err_file = Path(tmpdir) / "error.txt"
+
+    monkeypatch.setenv("ERROR_FILE", str(err_file))
+
+    if err_on is not None:
+        monkeypatch.setenv("TEST_ERR_ON", err_on)
+    if has_error:
+        with pytest.raises(Exception):
+            create_met_ems()
+            run_script("run_wrf.sh")
+        assert err_file.exists()
+    else:
+        create_met_ems()
+        result = run_script("run_wrf.sh")
+        assert result.returncode == 0
+        assert not err_file.exists()
+        assert_wrf_namelist(ts)
+
+
+def assert_wps_namelist(ts: datetime):
     wrf_maindir = os.getenv("WRF_MAINDIR")
     namelist_suff = os.getenv("NAMELIST_SUFF")
     assert wrf_maindir is not None
@@ -28,14 +101,7 @@ def test_wps(run_script, set_date_env):
     assert f"{ts2:%Y-%m-%d_%H:00:00}" in lines[4].strip()
 
 
-def test_wrf(run_script, set_date_env, create_met_ems):
-    ts = datetime(2024, 6, 3, 12)
-    set_date_env(ts)
-
-    create_met_ems()
-    result = run_script("run_wrf.sh")
-    assert result.returncode == 0
-
+def assert_wrf_namelist(ts: datetime):
     wrf_realdir = os.getenv("WRF_REALDIR")
     namelist_run = os.getenv("NAMELIST_RUN")
     assert wrf_realdir is not None
