@@ -114,7 +114,7 @@ if [ ${#ECMWF_FILES[@]} -ne $NUM_TIMESTEPS ]; then
 fi
 
 # Send notifier if ECMWF files still incomplete
-ECMWF_FILES=("$ECMWF_DIR"/*.nc)
+ECMWF_FILES=("$ECMWF_DIR"/*.grib2)
 if [ ${#ECMWF_FILES[@]} -ne $NUM_TIMESTEPS ]; then
   err_msg="number of ECMWF Files: ${#ECMWF_FILES[@]}, expected: $NUM_TIMESTEPS"
   echo "$err_msg" >"$ERROR_FILE"
