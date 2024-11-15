@@ -21,3 +21,11 @@ def wrfnc(data_dir: Path):
     if file.is_file():
         return file
     return None
+
+
+@pytest.fixture
+def ecmwfnc(data_dir: Path):
+    file = data_dir / "ecmwf_sample.nc"
+    if file.is_file():
+        return file
+    return None

@@ -163,11 +163,16 @@ Thumbs.db
 
 # End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks
 
+# Devenv
+.devenv*
+devenv.local.nix
+
+# direnv
+.direnv
+
+
 .vscode/
 .env
-
-/tests/python/data/*
-!/tests/python/data/README.md
 
 .tmp/
 input

@@ -67,7 +67,8 @@ def cron_env(request, tmp_path, monkeypatch, bash_dir):
     namelist_suff = "suff"
     monkeypatch.setenv("NAMELIST_SUFF", namelist_suff)
     monkeypatch.setenv("WPS_NAMELIST_SUFF", namelist_suff)
-    (wps_maindir / f"namelist.wps_{namelist_suff}").write_text("\n" * 5)
+    (wps_maindir / f"namelist.wps_gfs_{namelist_suff}").write_text("\n" * 5)
+    (wps_maindir / f"namelist.wps_ecmwf_{namelist_suff}").write_text("\n" * 5)
 
     namelist_run = "run1"
     monkeypatch.setenv("NAMELIST_RUN", namelist_run)
@@ -130,11 +131,12 @@ def create_met_ems():
         if (wrf_maindir is None) or (wps_namelist_suff is None):
             return
 
-        met_em_dir = Path(wrf_maindir) / f"WPS/{wps_namelist_suff}"
-        met_em_dir.mkdir(parents=True, exist_ok=True)
+        for m in ["gfs", "ecmwf"]:
+            met_em_dir = Path(wrf_maindir) / f"WPS/{wps_namelist_suff}/{m}"
+            met_em_dir.mkdir(parents=True, exist_ok=True)
 
-        for i in range(nfiles):
-            f = met_em_dir / f"met_em.d01.{i:04d}:00:00.nc"
-            f.touch()
+            for i in range(nfiles):
+                f = met_em_dir / f"met_em.d01.{i:04d}:00:00.nc"
+                f.touch()
 
     return c

@@ -86,19 +86,21 @@ def assert_wps_namelist(ts: datetime):
     wrf_maindir = os.getenv("WRF_MAINDIR")
     namelist_suff = os.getenv("NAMELIST_SUFF")
     assert wrf_maindir is not None
-    namelist = Path(wrf_maindir) / f"WPS/namelist.wps_{namelist_suff}"
-    assert namelist.exists()
 
-    with open(str(namelist), "r") as file:
-        lines = file.readlines()
+    for m in ["gfs", "ecmwf"]:
+        namelist = Path(wrf_maindir) / f"WPS/namelist.wps_{m}_{namelist_suff}"
+        assert namelist.exists()
 
-    assert len(lines) >= 5
-    assert f"{ts:%Y-%m-%d_%H:00:00}" in lines[3].strip()
+        with open(str(namelist), "r") as file:
+            lines = file.readlines()
 
-    ndays = os.getenv("WRF_FCST_DAYS")
-    assert ndays is not None
-    ts2 = ts + timedelta(days=int(ndays))
-    assert f"{ts2:%Y-%m-%d_%H:00:00}" in lines[4].strip()
+        assert len(lines) >= 5
+        assert f"{ts:%Y-%m-%d_%H:00:00}" in lines[3].strip()
+
+        ndays = os.getenv("WRF_FCST_DAYS")
+        assert ndays is not None
+        ts2 = ts + timedelta(days=int(ndays))
+        assert f"{ts2:%Y-%m-%d_%H:00:00}" in lines[4].strip()
 
 
 def assert_wrf_namelist(ts: datetime):

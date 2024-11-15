@@ -7,6 +7,7 @@ dependencies = [
     "netcdf4>=1.6",
     "numpy<2",
     "pandas<2.2",
+    "Pywinter",
     "tqdm>=4.64.0",
     "wrf-python",
     "xarray<2024",
@@ -26,7 +27,8 @@ dev-dependencies = [
 ]
 
 [tool.uv.sources]
-wrf-python = { git = "https://github.com/DWesl/wrf-python", branch = "cmake-build" }
+Pywinter = { git = "https://github.com/atsuyaourt/Pywinter", branch = "dev" }
+wrf-python = { git = "https://github.com/NCAR/wrf-python", branch = "develop" }
 
 [tool.pytest.ini_options]
 pythonpath = "scripts/python"
