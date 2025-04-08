@@ -38,17 +38,25 @@ ln -s "namelist.input_${NAMELIST_RUN}" namelist.input
 # -------------------------------------------- #
 #                Run Real.exe                  #
 # -------------------------------------------- #
-echo "  ********************  "
-echo " Running real "
-echo "  ********************  "
-
+echo "********************"
+echo "*   start of real  *"
+echo "********************"
+touch rsl.error.0000
 rm -f wrfbdy* wrfinput*
 srun ./real.exe >&log.real &
 tail --pid=$! -f rsl.error.0000
-
-echo "  ********************  "
-echo " End of REAL "
-echo "  ********************  "
+if ! tail -n 1 "rsl.error.0000" | grep -q "SUCCESS"; then
+  echo "real" >>"$ERROR_FILE"
+  rm -f rsl.error.* rsl.out.*
+  echo "********************"
+  echo "*    real error    *"
+  echo "********************"
+  exit 1
+fi
+rm -f rsl.error.* rsl.out.*
+echo "********************"
+echo "*    end of real   *"
+echo "********************"
 
 if [[ $WRF_MODE == '3dvar' ]]; then
 	mkdir -p "$WRF_REALDIR/wrfreal_tmp"
@@ -65,16 +73,24 @@ fi
 # -------------------------------------------- #
 #                Run WRF.exe                   #
 # -------------------------------------------- #
-echo "  ********************  "
-echo " Running WRF "
-echo "  ********************  "
-
+echo "********************"
+echo "*   start of wrf   *"
+echo "********************"
+touch rsl.error.0000
 srun ./wrf.exe >&log.wrf &
 tail --pid=$! -f rsl.error.0000
-
-echo "  ********************  "
-echo " End of WRF "
-echo "  ********************  "
+if ! tail -n 1 "rsl.error.0000" | grep -q "SUCCESS"; then
+  echo "wrf" >>"$ERROR_FILE"
+  rm -f rsl.error.* rsl.out.*
+  echo "********************"
+  echo "*     wrf error    *"
+  echo "********************"
+  exit 1
+fi
+rm -f rsl.error.* rsl.out.*
+echo "********************"
+echo "*    end of wrf    *"
+echo "********************"
 
 mkdir -p "$NAMELIST_RUN"
 

@@ -69,11 +69,6 @@ mamba env update -p ./venv -f ./venv.yaml --prune
 
 ---
 
-### Prerequisites
-
-- [pre-commit](https://pre-commit.com/)
-- [tox < 4](https://tox.wiki/en/3.9.0/)
-
 ### 1. Fork the Repository
 
 Fork the repository to your GitHub account.
@@ -94,12 +89,12 @@ Run pre-commit checks on all files:
 pre-commit run --all-files
 ```
 
-### 5. Run Tox
+### 5. Run pytest
 
 Execute tests defined in the `tox.ini`` file:
 
 ```bash
-CONDA_EXE=mamba tox
+pytest
 ```
 
 ### 6. Commit Your Changes
