@@ -75,14 +75,18 @@ def save_daily(day_offset=1):
         _missing_hours = _ref_dates.difference(_act_dates)
         _missing_hours.to_series().to_csv(out_dir + f"txt/Missing_{_day}.txt")
         print(f"Missing Hours: {len(_missing)}\nNot Saving Dataset...")
-    
-    if len(_missing) < 4 and len(_missing) > 0:  # For partially complete data (<4 hrs missing)
+
+    if (
+        len(_missing) < 4 and len(_missing) > 0
+    ):  # For partially complete data (<4 hrs missing)
         print(f"Missing Hours: {len(_missing)}\nSaving Dataset for {_day}...")
         # Logging of missing data
         _ref_dates = pd.date_range(start=f"{_day}", periods=24, freq="H")
         _act_dates = pd.Index(_combined.time.values)
         _missing_hours = _ref_dates.difference(_act_dates)
-        _missing_hours.to_series().to_csv(out_dir + f"txt/P_Missing_{_day}.txt") # Still logs partially missing days
+        _missing_hours.to_series().to_csv(
+            out_dir + f"txt/P_Missing_{_day}.txt"
+        )  # Still logs partially missing days
         # Process and Save Dataset
         _final = _combined.resample({"time": "D"}).mean()
         _final["rain"] = (
