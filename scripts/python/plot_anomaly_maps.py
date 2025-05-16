@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import xarray as xr
-from functools import partial
 import calendar
 import time
 from datetime import datetime
@@ -20,6 +19,7 @@ from helpers.anomaly_format import plot_proj, plot_vars, plot_format, plot_foote
 conf = Config()
 resources_dir = conf.script_dir / "python/resources/nc"
 wrf_dir = conf.data_dir / "anomaly/nc"
+daily_dir = conf.data_dir / "daily/nc"
 inp_dir = os.getenv("WRF_SERVER_DIR")
 out_dir = conf.data_dir / "anomaly"
 
@@ -51,35 +51,34 @@ def open_obs():  ## open observed climatological datasets
     return xr.merge([gsmap, aphrodite])
 
 
-def check_dates(date, ds):  ## check completeness of dates
-    _day_end = calendar.monthrange(
-        pd.to_datetime(date).year, pd.to_datetime(date).month
-    )[1]
+def check_dates(date, ds):
+    _days = calendar.monthrange(pd.to_datetime(date).year, pd.to_datetime(date).month)[
+        1
+    ]
+    start_date = np.datetime64(f"{date}-01")
+    end_date = np.datetime64(f"{date}-{_days}") + 1
+    _dates = np.arange(start_date, end_date).astype(
+        "datetime64[ns]"
+    )  # get complete list of dates for the month
 
-    _hours = 24
-    _ds_hours = ds.time.to_dataset(name="times").groupby("time.day").count("time")
-    _ds_hours = _ds_hours.where(_ds_hours["times"] < _hours, drop=True).day
-    _ds_sub = ds.where(ds.time.dt.day.isin(_ds_hours.values), drop=True)
-    _ds_sub = ds.drop_sel(time=_ds_sub["time"].values)
-    _percent_mon = len(np.unique(_ds_sub["time.day"].values))
-    _percent_mon = (_percent_mon / _day_end) * 100
-    _percent_mon = round(_percent_mon, 2)
-
-    print(f"Missing Days: {len(_ds_hours.values)}")
-    ## add list of missing hours to text file
-    _ref_dates = pd.date_range(start=f"{date}-01", periods=_hours * _day_end, freq="H")
-    _act_dates = pd.Index(ds.time.values)
-    _missing_dates = _ref_dates.difference(_act_dates)
-
-    if not _missing_dates.empty:
-        _missing_dates.to_series().to_csv(out_dir / f"txt/Missing_{date}.txt")
+    # Check and log for missing dates
+    _missing = list(set(_dates) - set(ds.time.values))  # get missing dates
+    print(f"Missing Days:{len(_missing)}")
+    if not len(_missing) == 0:
+        _missing_days = np.datetime_as_string(_missing, unit="D")
+        _missing_days = pd.Series(np.sort(_missing_days))  # Save as series
+        _missing_days.to_csv(
+            out_dir / f"txt/Missing_{date}.txt", index=False, header=["Missing Dates:"]
+        )
     else:
         print("No missing dates to save")
 
-    if _percent_mon >= 80:
-        _wrf_temp = _ds_sub[["temp"]].groupby("time.month").mean("time")
-        _wrf_rain = _ds_sub[["rain"]].groupby("time.month").sum("time")
-
+    _percent_complete = (len(ds.time.values) / len(_dates)) * 100
+    # Conditions for completeness
+    if _percent_complete >= 80:
+        _wrf_temp = ds[["temp"]].groupby("time.month").mean("time")
+        _wrf_rain = ds[["rain"]].groupby("time.month").sum("time")
+        print(_percent_complete)
         _mask = xr.open_dataset(f"{resources_dir}/WRF_LANDMASK_PH.nc")
         _wrf_temp = _wrf_temp.assign(
             {
@@ -95,39 +94,22 @@ def check_dates(date, ds):  ## check completeness of dates
                 .mean(("lat", "lon"))
             }
         )
-
     return _wrf_temp.combine_first(_wrf_rain)
 
 
-def _preprocess(
-    ds,
-):  ## function to select specific variables and time slice for open_mfdataset
-    return ds.isel(time=slice(6))[["rain", "temp"]].mean("ens")
-
-
-partial_func = partial(_preprocess)
-
-
 def read_wrf_out(date):  ## open and process _file_dates
-    _wrf_arowana = xr.open_mfdataset(
-        f"{inp_dir}/output.arowana/nc/wrf_{date}-??_??.nc",
+    _wrf_daily = xr.open_mfdataset(
+        f"{daily_dir}/wrf_{date}-??.nc",
         concat_dim="time",
         combine="nested",
-        preprocess=partial_func,
         chunks="auto",
         parallel=True,
     )
-
-    _wrf_dugong = xr.open_mfdataset(
-        f"{inp_dir}/output.dugong/nc/wrf_{date}-??_??.nc",
-        concat_dim="time",
-        combine="nested",
-        preprocess=partial_func,
-        chunks="auto",
-        parallel=True,
-    )
-    _wrf_comb = _wrf_dugong.combine_first(_wrf_arowana)
-    _wrf_month = check_dates(date, _wrf_comb)
+    try:
+        _wrf_month = check_dates(date, _wrf_daily)
+    except Exception:
+        print("Month did not pass completeness test. Check missing date logs...")
+        pass
 
     _obs = open_obs()
 
