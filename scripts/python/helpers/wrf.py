@@ -29,7 +29,7 @@ RAW_VARS = (
     "COSZEN",
     "SWDDIF",
     "U10",
-    "V10"
+    "V10",
 )
 
 DERIVED_VARS = {
