@@ -11,7 +11,7 @@ import matplotlib as mp
 import matplotlib.pyplot as plt
 
 from config import Config
-from helpers.anomaly_format_test import plot_proj, plot_vars, plot_format
+from helpers.anomaly_format import plot_proj, plot_vars, plot_format
 
 conf = Config()
 resources_dir = conf.script_dir / "python/resources/nc"
@@ -38,6 +38,7 @@ def get_combined_dataset(date):
 
         _mask = xr.open_dataset(f"{resources_dir}/WRF_LANDMASK_PH.nc")
         combined_data = combined_data.where(_mask.LANDMASK == 1)
+        combined_data = combined_data.where(combined_data.rain >= 1)
         return combined_data
     except FileNotFoundError:
         print("One or both of the monthly files are missing.")
@@ -133,7 +134,7 @@ def plot_comparison():  ## plot anomalies per month
                 cbar = plt.colorbar(p, ax=ax, ticks=levels, shrink=0.35)
                 cbar.ax.tick_params(labelsize=fsize - 2)
                 p.colorbar.ax.set_title(
-                    f"[{var_info['units']}]", pad=25, fontsize=fsize
+                    f"[{var_info['units']}]", pad=25, loc="left", fontsize=fsize
                 )
             plt_title = f"{titles[var]}\n(WRF ensemble)"
             fig.suptitle(plt_title, fontsize=12, y=0.9)

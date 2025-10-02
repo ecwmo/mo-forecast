@@ -102,7 +102,7 @@ plot_vars = {
     },
     "rain_difference": {
         "units": "%",
-        "levels": np.arange(-100, 120, 20),
+        "levels": np.arange(-220, 260, 40),
         "colors": [
             mp.colors.rgb2hex(mp.cm.get_cmap("BrBG")(i))
             for i in range(mp.cm.get_cmap("BrBG").N)
@@ -136,10 +136,10 @@ plot_vars = {
     },
     "temp_difference": {
         "units": "°C",
-        "levels": np.arange(-1, 1.2, 0.2),
+        "levels": np.arange(-1.5, 1.8, 0.3),
         "colors": [
-            mp.colors.rgb2hex(mp.cm.get_cmap("coolwarm")(i))
-            for i in range(mp.cm.get_cmap("coolwarm").N)
+            mp.colors.rgb2hex(mp.cm.get_cmap("bwr")(i))
+            for i in range(mp.cm.get_cmap("bwr").N)
         ],
     },
 }
