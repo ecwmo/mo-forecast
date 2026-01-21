@@ -174,7 +174,7 @@ def shearline_detection(ds_hr, vimfc_ds):
 
     RV_925 = mpcalc.vorticity(u_925, v_925)
 
-    lon_values = v_925["lon"].values
+    #lon_values = v_925["lon"].values
     lat_values = v_925["lat"].values
 
     R = 6.371e6  # Earth radius in meters
@@ -201,12 +201,12 @@ def shearline_detection(ds_hr, vimfc_ds):
     lats_common = np.intersect1d(v_925.lat, vimfc_subset.lat)
     lons_common = np.intersect1d(v_925.lon, vimfc_subset.lon)
 
-    u_925_sub = u_925.sel(lat=lats_common, lon=lons_common)
+    #u_925_sub = u_925.sel(lat=lats_common, lon=lons_common)
     v_925_sub = v_925.sel(lat=lats_common, lon=lons_common)
     RV_925_sub = RV_925.sel(lat=lats_common, lon=lons_common)
     vimfc_sub = vimfc_subset.sel(lat=lats_common, lon=lons_common)
 
-    V = v_925_sub * units("m/s")
+    #V = v_925_sub * units("m/s")
     dV_dy = mpcalc.geospatial_gradient(v_925_sub, return_only="df/dy").magnitude
 
     # Now all arrays have the same shape along lat/lon
