@@ -333,16 +333,8 @@ def save_shearline_csv(ds, out_dir):
 
 def plot_weather_chart(ds, shearline_df, out_dir):
     for hour in range(0, len(ds.time), 1):
-        init_datetime = (
-            (ds.isel(time=0).time)
-            .dt.strftime("%Y-%m-%d %H")
-            .item()
-        )
-        dates_datetime = (
-            (ds.isel(time=hour).time)
-            .dt.strftime("%Y-%m-%d %H")
-            .item()
-        )
+        init_datetime = (ds.isel(time=0).time).dt.strftime("%Y-%m-%d %H").item()
+        dates_datetime = (ds.isel(time=hour).time).dt.strftime("%Y-%m-%d %H").item()
 
         ds_hr = ds.isel(time=hour, drop=True)
         ght_850 = ds_hr["gh"].sel(isobaricInhPa=850)
