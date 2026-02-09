@@ -342,7 +342,6 @@ def plot_weather_chart(ds, shearline_df, out_dir):
         thickness_1000_850 = gaussian_filter(ght_850 - ght_1000, sigma=3.0)
         mslp = gaussian_filter(ds_hr["mslp"], sigma=3.0) / 100
 
-
         map_projection = ccrs.LambertConformal(
             central_longitude=130.0,
             central_latitude=15.0,
