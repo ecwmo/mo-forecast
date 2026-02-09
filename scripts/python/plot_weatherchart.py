@@ -427,7 +427,7 @@ def plot_weather_chart(ds, shearline_df, out_dir):
             symbol="L",
             color="r",
         )
-        
+
         ax.text(
             143.8,
             2.6,
