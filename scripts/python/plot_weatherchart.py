@@ -345,15 +345,15 @@ def plot_weather_chart(ds, shearline_df, out_dir):
         map_projection = ccrs.LambertConformal(
             central_longitude=130.0,
             central_latitude=15.0,
-            standard_parallels=(33.0, 45.0)
+            standard_parallels=(33.0, 45.0),
         )
 
         fs = 22
         fig = plt.figure(1, figsize=(17.0, 11.0))
         ax = plt.subplot(projection=map_projection)
-        ax.add_feature(cfeature.COASTLINE, edgecolor='black')
-        ax.add_feature(cfeature.LAND, facecolor='lightgray', alpha=0.5)
-        ax.add_feature(cfeature.OCEAN, facecolor='#c5e9f9', alpha=0.5)
+        ax.add_feature(cfeature.COASTLINE, edgecolor="black")
+        ax.add_feature(cfeature.LAND, facecolor="lightgray", alpha=0.5)
+        ax.add_feature(cfeature.OCEAN, facecolor="#c5e9f9", alpha=0.5)
         ax.set_extent([110, 150, 2, 30], crs=ccrs.PlateCarree())
 
         ### PLOT SHEARLINE
